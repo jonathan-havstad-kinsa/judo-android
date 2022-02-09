@@ -31,8 +31,10 @@ import androidx.annotation.MainThread
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import app.judo.sdk.BuildConfig
 import app.judo.sdk.R
 import app.judo.sdk.api.errors.ExperienceError
@@ -57,6 +59,7 @@ import app.judo.sdk.ui.models.ExperienceState
 import app.judo.sdk.ui.state.ExperienceFragmentState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.launch
 
 open class ExperienceFragment : Fragment() {
 
@@ -204,9 +207,11 @@ open class ExperienceFragment : Fragment() {
 
             render(viewModel.stateFlow.value)
 
-            lifecycleScope.launchWhenStarted {
-                viewModel.stateFlow.collect { state ->
-                    render(state)
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    viewModel.stateFlow.collect { state ->
+                        render(state)
+                    }
                 }
             }
 
@@ -214,9 +219,11 @@ open class ExperienceFragment : Fragment() {
 
             render(model.stateFlow.value)
 
-            lifecycleScope.launchWhenStarted {
-                model.stateFlow.collect { state ->
-                    render(state)
+            viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+                viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    model.stateFlow.collect { state ->
+                        render(state)
+                    }
                 }
             }
 
@@ -265,15 +272,19 @@ open class ExperienceFragment : Fragment() {
 
     private fun listenForActions() {
         if (useRenderTree) {
-            lifecycleScope.launchWhenStarted {
-                model.eventFlow.filterIsInstance<Event.ActionReceived>().collect { event ->
-                    handleAction(event.action)
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    model.eventFlow.filterIsInstance<Event.ActionReceived>().collect { event ->
+                        handleAction(event.action)
+                    }
                 }
             }
         } else {
-            lifecycleScope.launchWhenStarted {
-                model.eventFlow.filterIsInstance<Action>().collect { action ->
-                    handleAction(action)
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    model.eventFlow.filterIsInstance<Action>().collect { action ->
+                        handleAction(action)
+                    }
                 }
             }
         }

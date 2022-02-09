@@ -18,13 +18,18 @@
 package app.judo.sdk.ui.implementations
 
 import app.judo.sdk.core.events.EventBus
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 class EventBusImpl : EventBus {
 
-    private val backingEventFlow = MutableSharedFlow<Any>()
+    private val backingEventFlow = MutableSharedFlow<Any>(
+        replay = 1,
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     override val eventFlow: SharedFlow<Any> = backingEventFlow.asSharedFlow()
 
