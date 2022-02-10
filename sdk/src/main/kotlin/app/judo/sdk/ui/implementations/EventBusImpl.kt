@@ -25,16 +25,15 @@ import kotlinx.coroutines.flow.asSharedFlow
 
 class EventBusImpl : EventBus {
 
-    private val backingEventFlow = MutableSharedFlow<Any>(
-        replay = 1,
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
+    /// This MutableSharedFlow is the heart of the event bus itself.
+    ///
+    /// However, as a workaround for what we perceive as misbehaviour where the MSF appears
+    /// to hang on certain events. It is unclear why.
+    private val backingEventFlow = MutableSharedFlow<Any>(onBufferOverflow = BufferOverflow.DROP_OLDEST, extraBufferCapacity = 1)
 
     override val eventFlow: SharedFlow<Any> = backingEventFlow.asSharedFlow()
 
     override suspend fun publish(event: Any) {
         backingEventFlow.emit(event)
     }
-
 }
